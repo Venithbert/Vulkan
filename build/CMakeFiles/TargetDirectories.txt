@@ -1,0 +1,3 @@
+C:/projects/Vulkan/build/CMakeFiles/Vulkan.dir
+C:/projects/Vulkan/build/CMakeFiles/ALL_BUILD.dir
+C:/projects/Vulkan/build/CMakeFiles/ZERO_CHECK.dir
