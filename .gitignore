@@ -1,0 +1,32 @@
+# Visual Studio
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.sln
+*.slnx
+x64/
+Debug/
+Release/
+
+# CMake
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Compiled binaries
+*.exe
+*.dll
+*.obj
+*.o
+*.pdb
+*.ilk
+*.lib
+*.exp
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
