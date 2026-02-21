@@ -33,7 +33,7 @@ private:
 
 
     void initWindow() {
-        glfwInit();
+        glfwInit(); //glfw header method
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);//GLFW was originally designed to create an OpenGL context, we need to tell it to not create an OpenGL context with a later call:
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); //Because handling resized windows takes special care that we’ll look into later, disable it for now with another window hint call:
@@ -48,15 +48,21 @@ private:
     }
 
 
-    void mainLoop() {
-        while (!glfwWindowShouldClose(window)) {
-            glfwPollEvents();
-        }
 
+
+    //loops and checks for events like pressing the X button until the user has closed the window.This is also the loop where we’ll later call a function to render a single frame.
+    void mainLoop() { 
+        while (!glfwWindowShouldClose(window)) //returns false as long as window is open
+        { 
+            glfwPollEvents();// checks the OS event queue and processes any pending events
+        }
     }
 
 
-    void cleanUp() {
+
+
+
+    void cleanUp() { //clean up resources by destroying it and terminating GLFW itself
         glfwDestroyWindow(window);
         glfwTerminate();
     }
