@@ -4,78 +4,91 @@
 #else
 import vulkan_hpp;
 #endif
-#include <GLFW/glfw3.h>
 
-
-//debug
 #include <iostream>
 #include <stdexcept>
+
+#include <SDL3/SDL.h> //platform specific extension stuff window/input
+#include <SDL3/SDL_vulkan.h> 
 
 //Provides the EXIT_SUCCESS and EXIT_FAILURE macros
 #include <cstdlib>
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
 
-class HelloTriangleApplication {
+VkInstance instance{ VK_NULL_HANDLE };
 
-public:
-    void run() {
-        initWindow(); //glfw
-        initVulkan();
-        mainLoop();
-        cleanUp();
+//error handling. Most Vulkan functions can fail in different ways and return a VkResult value. 
+//this return the return the result. do this in more sophisticated way in future.
+static inline void chk(VkResult result) {
+    if (result != VK_SUCCESS) {
+        std::cerr << "Vulkan call returned an error (" << result << ")\n";
+        exit(result);
     }
+}
 
-private:
+class TBCApplication {
 
-    GLFWwindow* window = nullptr;
-
-
-    void initWindow() {
-        glfwInit(); //glfw header method
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);//GLFW was originally designed to create an OpenGL context, we need to tell it to not create an OpenGL context with a later call:
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); //Because handling resized windows takes special care that we’ll look into later, disable it for now with another window hint call:
-
-        // creating the actual window. initialize the window.
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr); //The fourth parameter allows you to optionally specify a monitor to open the window on, and the last parameter is only relevant to OpenGL.
-    }
-
-
-    void initVulkan(){
-
-    }
-
-
-
-
-    //loops and checks for events like pressing the X button until the user has closed the window.This is also the loop where we’ll later call a function to render a single frame.
-    void mainLoop() { 
-        while (!glfwWindowShouldClose(window)) //returns false as long as window is open
+    public:
+        void run(int argc, char* argv[]) 
         { 
-            glfwPollEvents();// checks the OS event queue and processes any pending events
+            //create instance > select device 
+            initVulkan();
+            selectDeviceVulkan(argc, argv);
+
         }
-    }
+
+    private:
+        void initVulkan()
+            {
+            VkApplicationInfo appInfo {  //structure type
+                    .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO, //.sType = a structure member 
+                    .pApplicationName = "TBCApplication",
+                    .apiVersion = VK_API_VERSION_1_3
+            };
+
+            //for platform specific window/input helper. no more need to do VK_KHR_win32_surface / GLFW etc. 
+            uint32_t instanceExtensionsCount{ 0 };
+            char const* const* instanceExtensions{ SDL_Vulkan_GetInstanceExtensions(&instanceExtensionsCount) };
+            
+            //now connect the application to Vulkan
+            VkInstanceCreateInfo instanceCI{
+                .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+                .pApplicationInfo = &appInfo,
+                .enabledExtensionCount = instanceExtensionsCount,
+                .ppEnabledExtensionNames = instanceExtensions,
+            };
+            chk(vkCreateInstance(&instanceCI, nullptr, &instance)); //calling vkCreateInstance creates our instance.
+        }
+
+        void selectDeviceVulkan(int argc, char* argv[])
+        {
+            uint32_t deviceCount{ 0 };
+            chk(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr)); //ask how many device exists
+            std::vector<VkPhysicalDevice> devices(deviceCount); //allocate enough storage
+            chk(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data())); //ask Vulkan to fill that storage
+
+            uint32_t deviceIndex{ 0 };
+            if (argc > 1) {
+                deviceIndex = std::stoi(argv[1]);
+                assert(deviceIndex < deviceCount); //error handling/ to make sure its in available range.
+            }
+
+            //output selected device
+            VkPhysicalDeviceProperties2 deviceProperties{ .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+            vkGetPhysicalDeviceProperties2(devices[deviceIndex], &deviceProperties);
+            std::cout << "Selected device: " << deviceProperties.properties.deviceName <<  "\n";
+        }
 
 
 
-
-
-    void cleanUp() { //clean up resources by destroying it and terminating GLFW itself
-        glfwDestroyWindow(window);
-        glfwTerminate();
-    }
 };
 
- 
-
-int main()
+int main(int argc, char* argv[])
 {
-    HelloTriangleApplication app;
+    TBCApplication app;
 
     try {
-        app.run();
+        app.run(argc, argv);
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
